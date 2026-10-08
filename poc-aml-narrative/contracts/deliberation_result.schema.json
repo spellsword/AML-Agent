@@ -1,0 +1,384 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "nova.poc.deliberation_result",
+  "title": "DeliberationResult — 七声部裁决 + 叙事产出契约",
+  "description": "TSD §2.2.3 裁决代理层 + §2.2.7(c) 模型行为透明度的产物。FSD SCR-TM-04 只读面板与 SCR-TM-06 覆核面板的数据源。核心不变量：output.recommendation 永不是自主裁定；每条实质主张必须携带 evidenceRefs。",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "runId",
+    "caseId",
+    "runContext",
+    "evidenceLedger",
+    "voices",
+    "judge",
+    "narrative",
+    "validation",
+    "fallback"
+  ],
+  "properties": {
+    "runId": { "type": "string", "description": "对应 LLM requestId 幂等键。" },
+    "caseId": { "type": "string" },
+    "runContext": {
+      "type": "object",
+      "description": "TSD §2.2.7(c)：每次运行钉住四版本，任一历史决策可复现。",
+      "additionalProperties": false,
+      "required": ["promptVersion", "modelId", "modelVersion", "knowledgeVersion", "configVersion"],
+      "properties": {
+        "promptVersion": { "type": "string" },
+        "modelId": { "type": "string" },
+        "modelVersion": { "type": "string" },
+        "knowledgeVersion": { "type": "string" },
+        "configVersion": { "type": "string" },
+        "scenarioCode": { "type": "string", "pattern": "^SCN[0-9]{3}$" },
+        "retrievalMode": {
+          "type": "string",
+          "enum": ["zero_shot", "similar_case", "vector_unavailable"],
+          "description": "Milvus 不可用时按 TSD §12.5 走 zero_shot 并打标供 QC 可见。"
+        },
+        "jurisdiction": { "type": "string", "const": "MY" },
+        "startedAt": { "type": "string", "format": "date-time" },
+        "elapsedMs": { "type": "integer", "description": "§13.3 单案件 <5 分钟为硬目标。" }
+      }
+    },
+    "evidenceLedger": {
+      "type": "object",
+      "description": "Evidence Explorer 的来源台账。evidenceRefs 的唯一合法取值域。",
+      "additionalProperties": false,
+      "required": ["entries"],
+      "properties": {
+        "entries": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["evidenceId", "sourceType", "summary"],
+            "properties": {
+              "evidenceId": { "type": "string", "pattern": "^EVID-[A-Z0-9\\-]+$" },
+              "sourceType": {
+                "type": "string",
+                "enum": ["transaction", "kyc", "ctos_ubo", "screening", "nns_search", "prior_alert", "policy"]
+              },
+              "summary": { "type": "string" },
+              "citationText": { "type": "string" },
+              "artifactRef": { "type": ["string", "null"] }
+            }
+          }
+        }
+      }
+    },
+    "voices": {
+      "type": "object",
+      "description": "七声部。三个 juror 必须是独立投票，不得互相看到对方投票结果。",
+      "additionalProperties": false,
+      "required": ["detective", "prosecutor", "defender", "jurors"],
+      "properties": {
+        "detective": { "$ref": "#/definitions/detective" },
+        "prosecutor": { "$ref": "#/definitions/argument" },
+        "defender": { "$ref": "#/definitions/argument" },
+        "jurors": {
+          "type": "array",
+          "minItems": 3,
+          "maxItems": 3,
+          "items": { "$ref": "#/definitions/juror" }
+        }
+      }
+    },
+    "judge": { "$ref": "#/definitions/judge" },
+    "narrative": { "$ref": "#/definitions/narrative" },
+    "validation": {
+      "type": "object",
+      "description": "CTL-20 结构化输出校验结果。validationGate=REJECTED 时不得使用 narrative。",
+      "additionalProperties": false,
+      "required": ["validationGate", "checks"],
+      "properties": {
+        "validationGate": { "type": "string", "enum": ["PASS", "REJECTED"] },
+        "checks": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["checkId", "status"],
+            "properties": {
+              "checkId": {
+                "type": "string",
+                "enum": [
+                  "schema_valid",
+                  "evidence_refs_resolvable",
+                  "no_unmasked_pii",
+                  "no_abbreviation_in_narrative",
+                  "no_premature_escalate_state",
+                  "prompt_injection_clean",
+                  "recommendation_not_autonomous",
+                  "full_terms_expanded"
+                ]
+              },
+              "status": { "type": "string", "enum": ["PASS", "FAIL"] },
+              "detail": { "type": ["string", "null"] }
+            }
+          }
+        },
+        "violations": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "fallback": {
+      "type": "object",
+      "description": "TSD §12.5 降级标记。engaged=true 表示 AI 叙事被放弃，走规则模板并转人工。",
+      "additionalProperties": false,
+      "required": ["engaged", "reason"],
+      "properties": {
+        "engaged": { "type": "boolean" },
+        "reason": {
+          "type": ["string", "null"],
+          "enum": [
+            "LLM_TIMEOUT",
+            "LLM_OUTPUT_INVALID",
+            "LLM_AUTH_FAILURE",
+            "LLM_SERVICE_UNAVAILABLE",
+            "PII_MASK_FAILED",
+            "CUMULATIVE_BUDGET_EXHAUSTED",
+            null
+          ]
+        },
+        "ruleEngineTemplateId": { "type": ["string", "null"] },
+        "heldForManualInvestigation": {
+          "type": "boolean",
+          "description": "降级后必须为 true——不允许自动处置。"
+        }
+      }
+    },
+    "humanDecision": {
+      "type": ["object", "null"],
+      "description": "FSD §3.9：同意与覆核是两个独立动作，覆核必须带理由。",
+      "additionalProperties": false,
+      "required": ["actorId", "action", "at"],
+      "properties": {
+        "actorId": { "type": "string" },
+        "actorRole": { "type": "string", "enum": ["tm_checker", "tl_reviewer", "gaml_l3", "gaml_l4", "qc_reviewer"] },
+        "action": { "type": "string", "enum": ["agree_close", "agree_escalate", "override_to_escalate", "override_to_close", "trigger_rfi"] },
+        "rationale": { "type": ["string", "null"], "description": "override 动作下必填。" },
+        "aiFeedbackCategory": {
+          "type": ["string", "null"],
+          "enum": ["fact_extracted_incorrectly", "wrong_rule_applied", "false_positive_red_flag", null]
+        },
+        "routedTo": {
+          "type": ["string", "null"],
+          "enum": ["qc_review", "manager_approval", "gaml_l3_review", "rfi_pending", null]
+        },
+        "at": { "type": "string", "format": "date-time" }
+      }
+    }
+  },
+  "definitions": {
+    "detective": {
+      "type": "object",
+      "description": "事实与证据覆盖，不作倾向性判断。",
+      "additionalProperties": false,
+      "required": ["facts", "redFlags", "evidenceCoverage"],
+      "properties": {
+        "facts": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["statement", "evidenceRefs"],
+            "properties": {
+              "statement": { "type": "string" },
+              "evidenceRefs": { "type": "array", "items": { "type": "string" }, "minItems": 1 }
+            }
+          }
+        },
+        "redFlags": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["code", "description"],
+            "properties": {
+              "code": { "type": "string", "description": "RF 码，来自场景知识条目。" },
+              "description": { "type": "string" },
+              "evidenceRefs": { "type": "array", "items": { "type": "string" } }
+            }
+          }
+        },
+        "metricEvaluations": {
+          "type": "array",
+          "description": "Risk Analyzer 产出的命名检测度量求值结果。",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["metricKey", "observed", "operator", "threshold", "hit"],
+            "properties": {
+              "metricKey": { "type": "string" },
+              "observed": { "type": ["number", "boolean"] },
+              "operator": { "type": "string", "enum": [">=", "<="] },
+              "threshold": { "type": "number" },
+              "hit": { "type": "boolean" },
+              "unit": { "type": ["string", "null"] },
+              "featureContribution": {
+                "type": ["number", "null"],
+                "description": "TSD §2.2.7(a) 规则类打分的精确特征贡献值，公式项本身。"
+              }
+            }
+          }
+        },
+        "evidenceCoverage": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "evidenceCatalogued": { "type": "integer" },
+            "redFlagsIdentified": { "type": "integer" },
+            "gaps": { "type": "array", "items": { "type": "string" }, "description": "缺失证据，直接支撑 RFI 建议。" }
+          }
+        }
+      }
+    },
+    "argument": {
+      "type": "object",
+      "description": "Prosecutor / Defender 论据。每条主张必须有 evidenceRefs——Argument provenance 是 TSD §2.2.7(b) 要求的可解释形态。",
+      "additionalProperties": false,
+      "required": ["position", "thesis", "arguments", "confidence"],
+      "properties": {
+        "position": { "type": "string", "enum": ["Escalate", "Close"] },
+        "coreThesis": { "type": "string" },
+        "arguments": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["claim", "evidenceRefs"],
+            "properties": {
+              "claim": { "type": "string" },
+              "evidenceRefs": { "type": "array", "items": { "type": "string" }, "minItems": 1 },
+              "ruleCode": { "type": ["string", "null"], "description": "BR / RF / CC 码。" },
+              "weight": { "type": "string", "enum": ["primary", "supporting"] }
+            }
+          }
+        },
+        "alternativeExplanations": { "type": "array", "items": { "type": "string" } },
+        "confidence": { "type": "number", "minimum": 0, "maximum": 1 },
+        "posture": {
+          "type": "string",
+          "enum": ["assertive", "measured", "defensive"],
+          "description": "Defender 专用：抗辩姿态。"
+        },
+        "plausibility": { "type": ["number", "null"], "minimum": 0, "maximum": 1 },
+        "rfiItems": {
+          "type": "array",
+          "description": "证据不足时列明需补信息，转 RFI 建议。",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["question", "targetParty"],
+            "properties": {
+              "question": { "type": "string" },
+              "targetParty": { "type": "string", "enum": ["customer", "relationship_manager", "business_unit", "internal_ops"] }
+            }
+          }
+        }
+      }
+    },
+    "juror": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["jurorId", "vote", "confidence", "completeness", "rationale", "accepted", "rejected"],
+      "properties": {
+        "jurorId": { "type": "string", "enum": ["A", "B", "C"] },
+        "roleFocus": {
+          "type": "string",
+          "enum": ["quantitative_metrics", "red_flag_evidence", "customer_context"],
+          "description": "三个陪审员差异化视角，避免同质化投票。"
+        },
+        "vote": { "type": "string", "enum": ["Escalate", "Close", "RFI", "STR"] },
+        "confidence": { "type": "number", "minimum": 0, "maximum": 1 },
+        "completeness": { "type": "number", "minimum": 0, "maximum": 1, "description": "证据完备度。" },
+        "rationale": { "type": "string" },
+        "accepted": { "type": "array", "items": { "type": "string" }, "description": "采纳的主张引用。" },
+        "rejected": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["claimRef", "ground"],
+            "properties": {
+              "claimRef": { "type": "string" },
+              "ground": { "type": "string" }
+            }
+          }
+        }
+      }
+    },
+    "judge": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["decision", "decisionCode", "confidence", "decisiveFactors", "strongestSurvivingCounterArgument", "voteSummary"],
+      "properties": {
+        "decision": { "type": "string", "enum": ["Close", "Escalate", "RFI"] },
+        "decisionCode": { "type": "string" },
+        "confidence": { "type": "number", "minimum": 0, "maximum": 1 },
+        "coreSynthesis": { "type": "string" },
+        "decisiveFactors": { "type": "array", "items": { "type": "string" }, "minItems": 1 },
+        "strongestSurvivingCounterArgument": {
+          "type": "string",
+          "description": "TSD §2.2.7(b)：记录它击败的最强反论，而非隐藏。"
+        },
+        "namedUnknowns": { "type": "array", "items": { "type": "string" } },
+        "dissentingConsiderations": { "type": "array", "items": { "type": "string" } },
+        "adoptedVoices": { "type": "array", "items": { "type": "string" } },
+        "rejectedVoices": { "type": "array", "items": { "type": "string" } },
+        "ruleCodes": { "type": "array", "items": { "type": "string" } },
+        "voteSummary": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "escalate": { "type": "integer" },
+            "close": { "type": "integer" },
+            "rfi": { "type": "integer" },
+            "str": { "type": "integer" }
+          }
+        }
+      }
+    },
+    "narrative": {
+      "type": "object",
+      "description": "Narrative Generation Agent 产出。六段式，段序固定。CTL-20 强制使用全称而非缩写。",
+      "additionalProperties": false,
+      "required": ["sections", "recommendation", "fullTermsApplied"],
+      "properties": {
+        "sections": {
+          "type": "array",
+          "minItems": 6,
+          "maxItems": 6,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["sectionKey", "content"],
+            "properties": {
+              "sectionKey": {
+                "type": "string",
+                "enum": [
+                  "customer_profile",
+                  "transaction_analysis",
+                  "risk_indicators",
+                  "screening_outcomes",
+                  "connected_parties",
+                  "conclusion"
+                ]
+              },
+              "title": { "type": "string" },
+              "content": { "type": "string", "description": "段落正文，须为完整术语。" },
+              "evidenceRefs": { "type": "array", "items": { "type": "string" } }
+            }
+          }
+        },
+        "recommendation": { "type": "string", "enum": ["Close", "Escalate", "RFI"] },
+        "rfiQuestions": { "type": "array", "items": { "type": "string" } },
+        "fullTermsApplied": {
+          "type": "boolean",
+          "description": "CTL-20 校验位：为 true 表示缩写已全部展开为全称。"
+        },
+        "renderedPdfRef": { "type": ["string", "null"], "description": "叙事报告 PDF 引用，批准链作为最后一页附上。" }
+      }
+    }
+  }
+}

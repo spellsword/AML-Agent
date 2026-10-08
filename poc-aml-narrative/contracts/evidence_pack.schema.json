@@ -1,0 +1,258 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "nova.poc.evidence_pack",
+  "title": "Case Evidence Pack — POC 唯一输入契约",
+  "description": "TSD §2.1 case-centric processing：分析单元是单个案件。POC 不接任何真实系统，全部证据以本文件形态从 fixtures/ 载入。禁止在 POC 中新增本文件之外的顶层字段。",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "caseId",
+    "jurisdiction",
+    "alert",
+    "customer",
+    "accounts",
+    "transactions",
+    "screening",
+    "searchEvidence",
+    "priorAlerts",
+    "integrity"
+  ],
+  "properties": {
+    "caseId": {
+      "type": "string",
+      "pattern": "^TM-[0-9]{4}-[0-9]{4}-[0-9]{3}$",
+      "description": "案件编号，TSD §5.4.1 生命周期主键。"
+    },
+    "jurisdiction": {
+      "type": "string",
+      "enum": ["MY"],
+      "description": "TSD §2.2.6：强制不可空的辖区属性，参与唯一性约束。POC 恒为 MY，但字段必须存在——缺失即 fail-closed。"
+    },
+    "integrity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schemaVersion", "sourceSnapshot"],
+      "properties": {
+        "schemaVersion": { "type": "string", "const": "1.0.0" },
+        "sourceSnapshot": {
+          "type": "string",
+          "description": "证据快照标识，模拟 EDL 批次响应集的 transfer-complete 语义（TSD §8.8.2）。"
+        },
+        "generatedAt": { "type": "string", "format": "date-time" }
+      }
+    },
+    "alert": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["alertId", "scenarioCode", "detectedAt", "businessDate", "reasonCodes"],
+      "properties": {
+        "alertId": { "type": "string" },
+        "scenarioCode": {
+          "type": "string",
+          "pattern": "^SCN[0-9]{3}$",
+          "description": "FSD §1.10 场景码。不接受 SCN-001 形式（legacy 别名，见冲突裁决 §4）。POC 实现 SCN110 与 SCN201。"
+        },
+        "detectedAt": { "type": "string", "format": "date-time" },
+        "businessDate": { "type": "string", "format": "date" },
+        "reasonCodes": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "AML Datamart 提供的 DS 原因码，仅作参考；场景映射以 scenarioCode 对应知识条目为准。"
+        },
+        "riskScore": { "type": "number", "minimum": 0, "maximum": 100 }
+      }
+    },
+    "customer": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["customerRef", "type", "name", "kycStatus", "kycLastMaintenance"],
+      "properties": {
+        "customerRef": { "type": "string", "description": "脱敏代理键，掩码层以此为索引。" },
+        "type": {
+          "type": "string",
+          "enum": ["Individual", "Company", "Sole_Proprietor", "Partnership", "LLP"]
+        },
+        "name": { "type": "string" },
+        "riskRating": { "type": "string", "enum": ["Low", "Medium", "High"] },
+        "kycStatus": { "type": "string", "enum": ["Current", "Stale", "Incomplete"] },
+        "kycLastMaintenance": { "type": "string", "format": "date" },
+        "occupation": { "type": ["string", "null"], "description": "仅个人客户有意义；公司类客户为 null。" },
+        "declaredAnnualTurnover": {
+          "type": ["number", "null"],
+          "description": "Financial Capacity Verification 原则（TSD §2.2.3.1）的核心字段。为 null 时 Close 论据必须被削弱。"
+        },
+        "declaredSourceOfWealth": { "type": ["string", "null"] },
+        "declaredBusinessNature": { "type": ["string", "null"] },
+        "relationshipManager": { "type": ["string", "null"] },
+        "pepStatus": { "type": ["string", "null"], "enum": ["None", "PEP", "Former_PEP", null] },
+        "nationality": { "type": ["string", "null"] }
+      }
+    },
+    "accounts": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["accountRef", "currency", "openedAt"],
+        "properties": {
+          "accountRef": { "type": "string" },
+          "type": { "type": "string", "enum": ["Current", "Savings", "Credit_Card"] },
+          "currency": { "type": "string", "enum": ["MYR", "USD", "SGD", "THB"] },
+          "openedAt": { "type": "string", "format": "date" },
+          "cardLimit": { "type": ["number", "null"], "description": "信用卡额度，用于额度类红旗。" },
+          "status": { "type": "string", "enum": ["Active", "Dormant", "Closed"] },
+          "monthlyCreditTurnover": { "type": ["number", "null"] },
+          "monthlyDebitTurnover": { "type": ["number", "null"] }
+        }
+      }
+    },
+    "transactions": {
+      "type": "array",
+      "description": "POC 上限 5000 条。CTS/EDL 加载耗时受 §13.3 五分钟案件 SLA 约束，超限必须截断并打标 truncated=true。",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["txnRef", "accountRef", "postedAt", "direction", "amount", "channel", "country"],
+        "properties": {
+          "txnRef": { "type": "string" },
+          "accountRef": { "type": "string" },
+          "postedAt": { "type": "string", "format": "date-time" },
+          "valueDate": { "type": ["string", "null"], "format": "date" },
+          "direction": { "type": "string", "enum": ["Credit", "Debit"] },
+          "amount": { "type": "number", "exclusiveMinimum": 0 },
+          "currency": { "type": "string" },
+          "channel": {
+            "type": "string",
+            "enum": ["Cash", "Cheque", "Transfer", "Wire", "Card", "ATM", "Online", "Mobile"]
+          },
+          "country": { "type": "string" },
+          "counterpartyRef": { "type": ["string", "null"], "description": "空表示无对手方（现金）。" },
+          "counterpartyName": { "type": ["string", "null"] },
+          "counterpartyRisk": { "type": ["string", "null"], "enum": ["Low", "Medium", "High", "Sanctioned", null] },
+          "description": { "type": ["string", "null"] },
+          "cashIdentification": {
+            "type": ["object", "null"],
+            "additionalProperties": false,
+            "description": "PCT 凭证要素，TSD §2.5.1 要求超阈值现金交易纳入叙事。",
+            "properties": {
+              "identifier": { "type": "string" },
+              "amount": { "type": "number" },
+              "currency": { "type": "string" }
+            }
+          }
+        }
+      }
+    },
+    "ubo": {
+      "type": ["array", "null"],
+      "description": "CTOS 层级展开结果，≥25% 阈值，visited-subject set 防环，不推断未披露百分比。",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["subjectRef", "subjectType", "depth"],
+        "properties": {
+          "subjectRef": { "type": "string" },
+          "subjectType": { "type": "string", "enum": ["Company", "Individual", "Trust"] },
+          "ownershipPercent": { "type": ["number", "null"], "minimum": 0, "maximum": 100 },
+          "qualifyingUBO": { "type": "boolean", "description": "是否达到 ≥25% 合格 UBO。" },
+          "depth": { "type": "integer", "minimum": 0 },
+          "haltReason": {
+            "type": ["string", "null"],
+            "description": "trustee/nominee/tempatan/上市 关键词触发时写明，触发 manualReviewRequired → RFI。"
+          },
+          "providerReference": { "type": ["string", "null"] }
+        }
+      }
+    },
+    "screening": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["watchlistHits", "pepHits"],
+      "description": "筛查结果匹配：马来实体走身份全匹配，非马来实体走四要素匹配（姓名/证件/出生日期/国别）。",
+      "properties": {
+        "watchlistHits": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["hitId", "listName", "matchedName", "matchType", "band"],
+            "properties": {
+              "hitId": { "type": "string" },
+              "listName": { "type": "string" },
+              "matchedName": { "type": "string" },
+              "matchType": { "type": "string", "enum": ["Identity_Full", "Four_Element", "Script", "Fuzzy"] },
+              "band": { "type": "string", "enum": ["Match", "Review", "No_Match"] },
+              "adjudication": {
+                "type": ["string", "null"],
+                "enum": ["True_Match", "False_Positive", null],
+                "description": "null 表示待人工裁定。Review 段永不自动清除。"
+              },
+              "adjudicatedBy": { "type": ["string", "null"] }
+            }
+          }
+        },
+        "pepHits": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["hitId", "pepCategory", "band"],
+            "properties": {
+              "hitId": { "type": "string" },
+              "pepCategory": { "type": "string" },
+              "band": { "type": "string", "enum": ["Match", "Review", "No_Match"] },
+              "adjudication": { "type": ["string", "null"], "enum": ["True_Match", "False_Positive", null] }
+            }
+          }
+        }
+      }
+    },
+    "searchEvidence": {
+      "type": "array",
+      "description": "NNS 检索快照，模拟 Google Custom Search 证据，必须带来源与截图引用占位。",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["searchId", "query", "results"],
+        "properties": {
+          "searchId": { "type": "string" },
+          "query": { "type": "string" },
+          "searchedAt": { "type": "string", "format": "date-time" },
+          "results": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["title", "url", "snippet"],
+              "properties": {
+                "title": { "type": "string" },
+                "url": { "type": "string" },
+                "snippet": { "type": "string" },
+                "publishedAt": { "type": ["string", "null"], "format": "date" },
+                "screenshotRef": { "type": ["string", "null"], "description": "TSD §2.2.2 headless-browser 截图证据引用。" },
+                "relevance": { "type": "string", "enum": ["Adverse", "Neutral", "Favourable"] }
+              }
+            }
+          }
+        }
+      }
+    },
+    "priorAlerts": {
+      "type": "array",
+      "description": "历史告警，支撑重复告警抑制审查（FSD SCR-TM-03）。",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["caseId", "scenarioCode", "closedAt", "disposition"],
+        "properties": {
+          "caseId": { "type": "string" },
+          "scenarioCode": { "type": "string" },
+          "closedAt": { "type": "string", "format": "date" },
+          "disposition": { "type": "string", "enum": ["Close", "Escalate", "RFI"] },
+          "suppressionReason": { "type": ["string", "null"] }
+        }
+      }
+    }
+  }
+}

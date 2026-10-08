@@ -1,0 +1,393 @@
+{
+  "caseId": "TM-2026-0616-001",
+  "jurisdiction": "MY",
+  "integrity": {
+    "schemaVersion": "1.0.0",
+    "sourceSnapshot": "EDL-SNAP-20260616-OK",
+    "generatedAt": "2026-06-01T00:00:00"
+  },
+  "alert": {
+    "alertId": "AL-2026-0616-7781",
+    "scenarioCode": "SCN110",
+    "detectedAt": "2026-06-16T00:00:00",
+    "businessDate": "2026-06-16",
+    "reasonCodes": [
+      "DS24",
+      "HIGH_TURNOVER_OUT"
+    ],
+    "riskScore": 78
+  },
+  "customer": {
+    "customerRef": "CUST-001",
+    "type": "Company",
+    "name": "Zayntra Sdn Bhd",
+    "riskRating": "Medium",
+    "kycStatus": "Stale",
+    "kycLastMaintenance": "2025-04-27",
+    "occupation": null,
+    "declaredAnnualTurnover": 3800000,
+    "declaredSourceOfWealth": null,
+    "declaredBusinessNature": "Consumer electronics distribution",
+    "relationshipManager": "Priya Nair",
+    "pepStatus": "None",
+    "nationality": "MY"
+  },
+  "accounts": [
+    {
+      "accountRef": "ACC-1",
+      "type": "Current",
+      "currency": "MYR",
+      "openedAt": "2024-07-01",
+      "cardLimit": null,
+      "status": "Active",
+      "monthlyCreditTurnover": 5100000,
+      "monthlyDebitTurnover": 4900000
+    }
+  ],
+  "transactions": [
+    {
+      "txnRef": "TXN-A-000",
+      "accountRef": "ACC-1",
+      "postedAt": "2026-06-01T09:00:00",
+      "valueDate": "2026-06-01",
+      "direction": "Credit",
+      "amount": 1000000,
+      "currency": "MYR",
+      "channel": "Transfer",
+      "country": "MY",
+      "counterpartyRef": "CP-01",
+      "counterpartyName": "Counterparty Alpha 1",
+      "counterpartyRisk": "Medium",
+      "description": "Inbound customer payment"
+    },
+    {
+      "txnRef": "TXN-A-001",
+      "accountRef": "ACC-1",
+      "postedAt": "2026-06-02T09:00:00",
+      "valueDate": "2026-06-02",
+      "direction": "Credit",
+      "amount": 1001000,
+      "currency": "MYR",
+      "channel": "Transfer",
+      "country": "MY",
+      "counterpartyRef": "CP-02",
+      "counterpartyName": "Counterparty Alpha 2",
+      "counterpartyRisk": "Medium",
+      "description": "Inbound customer payment"
+    },
+    {
+      "txnRef": "TXN-A-002",
+      "accountRef": "ACC-1",
+      "postedAt": "2026-06-03T09:00:00",
+      "valueDate": "2026-06-03",
+      "direction": "Credit",
+      "amount": 1002000,
+      "currency": "MYR",
+      "channel": "Transfer",
+      "country": "MY",
+      "counterpartyRef": "CP-03",
+      "counterpartyName": "Counterparty Alpha 3",
+      "counterpartyRisk": "Medium",
+      "description": "Inbound customer payment"
+    },
+    {
+      "txnRef": "TXN-A-003",
+      "accountRef": "ACC-1",
+      "postedAt": "2026-06-04T09:00:00",
+      "valueDate": "2026-06-04",
+      "direction": "Credit",
+      "amount": 1003000,
+      "currency": "MYR",
+      "channel": "Transfer",
+      "country": "MY",
+      "counterpartyRef": "CP-04",
+      "counterpartyName": "Counterparty Alpha 4",
+      "counterpartyRisk": "Medium",
+      "description": "Inbound customer payment"
+    },
+    {
+      "txnRef": "TXN-A-004",
+      "accountRef": "ACC-1",
+      "postedAt": "2026-06-05T09:00:00",
+      "valueDate": "2026-06-05",
+      "direction": "Credit",
+      "amount": 1004000,
+      "currency": "MYR",
+      "channel": "Transfer",
+      "country": "MY",
+      "counterpartyRef": "CP-05",
+      "counterpartyName": "Counterparty Alpha 5",
+      "counterpartyRisk": "Medium",
+      "description": "Inbound customer payment"
+    },
+    {
+      "txnRef": "TXN-B-000",
+      "accountRef": "ACC-1",
+      "postedAt": "2026-06-07T11:00:00",
+      "valueDate": "2026-06-07",
+      "direction": "Debit",
+      "amount": 400000,
+      "currency": "MYR",
+      "channel": "Wire",
+      "country": "MY",
+      "counterpartyRef": "CP-90",
+      "counterpartyName": "Meridian Trading Sdn Bhd",
+      "counterpartyRisk": "Medium",
+      "description": "Outbound settlement"
+    },
+    {
+      "txnRef": "TXN-B-001",
+      "accountRef": "ACC-1",
+      "postedAt": "2026-06-07T11:00:00",
+      "valueDate": "2026-06-07",
+      "direction": "Debit",
+      "amount": 405000,
+      "currency": "MYR",
+      "channel": "Wire",
+      "country": "MY",
+      "counterpartyRef": "CP-90",
+      "counterpartyName": "Meridian Trading Sdn Bhd",
+      "counterpartyRisk": "Medium",
+      "description": "Outbound settlement"
+    },
+    {
+      "txnRef": "TXN-B-002",
+      "accountRef": "ACC-1",
+      "postedAt": "2026-06-07T11:00:00",
+      "valueDate": "2026-06-07",
+      "direction": "Debit",
+      "amount": 410000,
+      "currency": "MYR",
+      "channel": "Wire",
+      "country": "MY",
+      "counterpartyRef": "CP-90",
+      "counterpartyName": "Meridian Trading Sdn Bhd",
+      "counterpartyRisk": "Medium",
+      "description": "Outbound settlement"
+    },
+    {
+      "txnRef": "TXN-B-003",
+      "accountRef": "ACC-1",
+      "postedAt": "2026-06-08T11:00:00",
+      "valueDate": "2026-06-08",
+      "direction": "Debit",
+      "amount": 400000,
+      "currency": "MYR",
+      "channel": "Wire",
+      "country": "MY",
+      "counterpartyRef": "CP-90",
+      "counterpartyName": "Meridian Trading Sdn Bhd",
+      "counterpartyRisk": "Medium",
+      "description": "Outbound settlement"
+    },
+    {
+      "txnRef": "TXN-B-004",
+      "accountRef": "ACC-1",
+      "postedAt": "2026-06-08T11:00:00",
+      "valueDate": "2026-06-08",
+      "direction": "Debit",
+      "amount": 405000,
+      "currency": "MYR",
+      "channel": "Wire",
+      "country": "MY",
+      "counterpartyRef": "CP-90",
+      "counterpartyName": "Meridian Trading Sdn Bhd",
+      "counterpartyRisk": "Medium",
+      "description": "Outbound settlement"
+    },
+    {
+      "txnRef": "TXN-B-005",
+      "accountRef": "ACC-1",
+      "postedAt": "2026-06-08T11:00:00",
+      "valueDate": "2026-06-08",
+      "direction": "Debit",
+      "amount": 410000,
+      "currency": "MYR",
+      "channel": "Wire",
+      "country": "MY",
+      "counterpartyRef": "CP-90",
+      "counterpartyName": "Meridian Trading Sdn Bhd",
+      "counterpartyRisk": "Medium",
+      "description": "Outbound settlement"
+    },
+    {
+      "txnRef": "TXN-B-006",
+      "accountRef": "ACC-1",
+      "postedAt": "2026-06-09T11:00:00",
+      "valueDate": "2026-06-09",
+      "direction": "Debit",
+      "amount": 400000,
+      "currency": "MYR",
+      "channel": "Wire",
+      "country": "MY",
+      "counterpartyRef": "CP-90",
+      "counterpartyName": "Meridian Trading Sdn Bhd",
+      "counterpartyRisk": "Medium",
+      "description": "Outbound settlement"
+    },
+    {
+      "txnRef": "TXN-B-007",
+      "accountRef": "ACC-1",
+      "postedAt": "2026-06-09T11:00:00",
+      "valueDate": "2026-06-09",
+      "direction": "Debit",
+      "amount": 405000,
+      "currency": "MYR",
+      "channel": "Wire",
+      "country": "MY",
+      "counterpartyRef": "CP-90",
+      "counterpartyName": "Meridian Trading Sdn Bhd",
+      "counterpartyRisk": "Medium",
+      "description": "Outbound settlement"
+    },
+    {
+      "txnRef": "TXN-B-008",
+      "accountRef": "ACC-1",
+      "postedAt": "2026-06-09T11:00:00",
+      "valueDate": "2026-06-09",
+      "direction": "Debit",
+      "amount": 410000,
+      "currency": "MYR",
+      "channel": "Wire",
+      "country": "MY",
+      "counterpartyRef": "CP-90",
+      "counterpartyName": "Meridian Trading Sdn Bhd",
+      "counterpartyRisk": "Medium",
+      "description": "Outbound settlement"
+    },
+    {
+      "txnRef": "TXN-B-009",
+      "accountRef": "ACC-1",
+      "postedAt": "2026-06-10T11:00:00",
+      "valueDate": "2026-06-10",
+      "direction": "Debit",
+      "amount": 400000,
+      "currency": "MYR",
+      "channel": "Wire",
+      "country": "MY",
+      "counterpartyRef": "CP-90",
+      "counterpartyName": "Meridian Trading Sdn Bhd",
+      "counterpartyRisk": "Medium",
+      "description": "Outbound settlement"
+    },
+    {
+      "txnRef": "TXN-B-010",
+      "accountRef": "ACC-1",
+      "postedAt": "2026-06-10T11:00:00",
+      "valueDate": "2026-06-10",
+      "direction": "Debit",
+      "amount": 405000,
+      "currency": "MYR",
+      "channel": "Wire",
+      "country": "MY",
+      "counterpartyRef": "CP-90",
+      "counterpartyName": "Meridian Trading Sdn Bhd",
+      "counterpartyRisk": "Medium",
+      "description": "Outbound settlement"
+    },
+    {
+      "txnRef": "TXN-B-011",
+      "accountRef": "ACC-1",
+      "postedAt": "2026-06-10T11:00:00",
+      "valueDate": "2026-06-10",
+      "direction": "Debit",
+      "amount": 410000,
+      "currency": "MYR",
+      "channel": "Wire",
+      "country": "MY",
+      "counterpartyRef": "CP-90",
+      "counterpartyName": "Meridian Trading Sdn Bhd",
+      "counterpartyRisk": "Medium",
+      "description": "Outbound settlement"
+    },
+    {
+      "txnRef": "TXN-A-CASH",
+      "accountRef": "ACC-1",
+      "postedAt": "2026-06-03T10:00:00",
+      "valueDate": "2026-06-03",
+      "direction": "Credit",
+      "amount": 850000,
+      "currency": "MYR",
+      "channel": "Cash",
+      "country": "MY",
+      "counterpartyRef": null,
+      "counterpartyName": null,
+      "counterpartyRisk": null,
+      "description": "Counter service cash deposit",
+      "cashIdentification": {
+        "identifier": "PACT-2026-88112",
+        "amount": 850000,
+        "currency": "MYR"
+      }
+    }
+  ],
+  "ubo": [
+    {
+      "subjectRef": "U-0",
+      "subjectType": "Company",
+      "ownershipPercent": 100,
+      "qualifyingUBO": true,
+      "depth": 0,
+      "haltReason": null,
+      "providerReference": "CTOS-EXAMPLE-0011"
+    },
+    {
+      "subjectRef": "U-1",
+      "subjectType": "Company",
+      "ownershipPercent": 40,
+      "qualifyingUBO": true,
+      "depth": 1,
+      "haltReason": null,
+      "providerReference": "CTOS-EXAMPLE-0012"
+    },
+    {
+      "subjectRef": "U-2",
+      "subjectType": "Individual",
+      "ownershipPercent": 35,
+      "qualifyingUBO": true,
+      "depth": 2,
+      "haltReason": null,
+      "providerReference": "CTOS-EXAMPLE-0013"
+    }
+  ],
+  "screening": {
+    "watchlistHits": [
+      {
+        "hitId": "HIT-9001",
+        "listName": "Regional Watchlist",
+        "matchedName": "ZAYNTRA SDN BHD",
+        "matchType": "Identity_Full",
+        "band": "Match",
+        "adjudication": "False_Positive",
+        "adjudicatedBy": "qc02"
+      }
+    ],
+    "pepHits": []
+  },
+  "searchEvidence": [
+    {
+      "searchId": "SRCH-1",
+      "query": "Zayntra Sdn Bhd regulatory action adverse news",
+      "searchedAt": "2026-06-16T02:00:00",
+      "results": [
+        {
+          "title": "Zayntra Sdn Bhd — company profile",
+          "url": "https://registry.example.com/company/zayntra",
+          "snippet": "Registered 2019, consumer electronics distribution, active status.",
+          "publishedAt": "2025-11-13",
+          "screenshotRef": "SHOT-SRCH-1-0",
+          "relevance": "Favourable"
+        }
+      ]
+    }
+  ],
+  "priorAlerts": [
+    {
+      "caseId": "TM-2025-0412-006",
+      "scenarioCode": "SCN110",
+      "closedAt": "2025-12-03",
+      "disposition": "Close",
+      "suppressionReason": "trade settlement pattern consistent with declared business"
+    }
+  ]
+}

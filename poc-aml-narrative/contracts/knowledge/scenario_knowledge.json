@@ -1,0 +1,118 @@
+{
+  "knowledgeBaseVersion": "KB-POC-2026.10.1",
+  "note": "TSD §2.2.3.1 场景知识层。阈值与知识条目唯一真相源；提示模板禁止硬编码任何阈值数字。POC 仅实现 SCN110 与 SCN201，其余场景占位。",
+  "genericPrinciples": {
+    "financialCapacityVerification": "任何依赖客户财务能力的 Close 建议，必须有文件化的财务数据支撑；此类数据缺失即削弱 Close 论据，不得默认客户具备承受能力。",
+    "evidenceBeforeConclusion": "任何结论主张必须可追溯到具体检索到的证据产物——交易记录、KYC 字段、CTOS 响应、筛查命中或公开域检索结果。无证据引用的主张视为无效。",
+    "noAutonomousDisposition": "AI 只产出建议，不做最终裁定。所有实质性处置均需人工双人复核。",
+    "escalationIsHumanInitiated": "系统不得在实际升级之前把告警状态置为升级态（CTL-20 结构化校验强制，非提示词约束）。",
+    "fullTermsNotAbbreviations": "生成文本使用完整术语，不得使用缩写形式（CTL-20 结构化校验强制）。"
+  },
+  "scenarios": [
+    {
+      "scenarioCode": "SCN110",
+      "name": "Rapid Movement of Funds",
+      "legacyAlias": "SCN_001_RAPID_MOVEMENT",
+      "mlTypology": "Layering",
+      "severity": "High",
+      "enabled": true,
+      "businessContext": "企业客户在窗口期内聚合转账并与申报经营周转额对比。本账户为他人或超出已记录活动范围搬运资金时触发。快速贸易商与资金密集型集团本就高周转，属合法高频，须在升级前先与发票核对。",
+      "detectionMetrics": [
+        { "metricKey": "flow_through_rate", "label": "资金流通率", "operator": ">=", "threshold": 0.9, "unit": "ratio", "compute": "窗口期内流出总额 / 流入总额", "contribution": "high" },
+        { "metricKey": "outgoing_vs_turnover_ratio", "label": "流出额对申报周转倍数", "operator": ">=", "threshold": 1.2, "unit": "x times", "compute": "窗口流出总额 / 申报周转额", "contribution": "high" },
+        { "metricKey": "counterparty_concentration", "label": "对手方集中度", "operator": ">=", "threshold": 0.8, "unit": "ratio", "compute": "前 N 大对手方金额占比", "contribution": "medium" },
+        { "metricKey": "max_balance_days", "label": "最长留存天数", "operator": "<=", "threshold": 7, "unit": "days", "compute": "入账至出账的最大间隔天数", "contribution": "medium" },
+        { "metricKey": "zero_balance_days", "label": "零余额天数", "operator": "<=", "threshold": 3, "unit": "days", "compute": "余额归零天数占比", "contribution": "low" },
+        { "metricKey": "distinct_counterparties", "label": "独立对手方数量", "operator": ">=", "threshold": 5, "unit": "count", "compute": "窗口期内独立对手方计数", "contribution": "medium" },
+        { "metricKey": "payment_by_ratio", "label": "按比例付款比", "operator": ">=", "threshold": 0.7, "unit": "ratio", "compute": "金额呈固定比例关系的交易对占比", "contribution": "medium" },
+        { "metricKey": "window_days", "label": "评估窗口天数", "operator": ">=", "threshold": 30, "unit": "days", "compute": "案件窗口期长度，仅作上下文不参与命中", "contribution": "context" }
+      ],
+      "escalationGate": { "minHits": 3, "note": "命中数达到该阈值即倾向升级；达到 minHits-1 倾向 RFI。severity 为业务调优杠杆，非权重分。" },
+      "redFlags": [
+        { "code": "RF-110-01", "description": "流出总额持续超过申报周转额，资金能力与实际活动不匹配" },
+        { "code": "RF-110-02", "description": "资金停留极短即转出，呈典型过账特征" },
+        { "code": "RF-110-03", "description": "对手方高度集中且无法说明关联关系或交易目的" },
+        { "code": "RF-110-04", "description": "对手方网络不透明，无法核实实际受益关系" },
+        { "code": "RF-110-05", "description": "交易流量与客户或主要对手方的已知行为不符" }
+      ],
+      "closeConditions": [
+        { "code": "CC-110-01", "prerequisite": "CC-001", "description": "自我划转为主导，且客户已说明内部资金归集用途", "prerequisiteDetail": "须有对公流水或集团内部划转凭证" },
+        { "code": "CC-110-02", "prerequisite": "CC-002", "description": "全部对手方经核实为已验证的商业对手方", "prerequisiteDetail": "须留有对手方 KYC 复核记录或合同证据" },
+        { "code": "CC-110-03", "prerequisite": "CC-003", "description": "资金流向与已申报经营活动一致", "prerequisiteDetail": "须有发票、报关单或服务合同佐证" },
+        { "code": "CC-110-04", "prerequisite": "CC-004", "description": "无负面新闻或不利检索结果", "prerequisiteDetail": "须附检索快照与截图引用" }
+      ],
+      "modusOperandi": "以商业收款账户承接多层来源资金，在短窗口内按既定比例分散转出至多个对手方，使单笔交易看似正常，累计流量远超申报经营规模。",
+      "analysisGuidance": {
+        "whenToEscalate": [
+          "三项及以上检测度量命中，且对手方网络无法核实",
+          "客户无法提供可验证的资金来源说明",
+          "存在与资金规模或对手方相关的负面检索结果"
+        ],
+        "whenToClose": [
+          "自我划转占主导且有内部归集说明（CC-001）",
+          "对手方全部验证为真实商业对手（CC-002）",
+          "资金流与已申报经营活动吻合且有发票支持（CC-003）",
+          "无负面新闻（CC-004）"
+        ],
+        "keyDecisionFactors": ["流出对周转倍数", "资金停留时长", "对手方集中度", "负面新闻检索结果"]
+      },
+      "rfiTriggers": [
+        { "trigger": "无法说明对手方关系或交易目的", "targetParty": "relationship_manager" },
+        { "trigger": "缺少发票或商业单据佐证资金流", "targetParty": "customer" },
+        { "trigger": "申报周转额与实际流量差异无法解释", "targetParty": "business_unit" }
+      ]
+    },
+    {
+      "scenarioCode": "SCN201",
+      "name": "Mule Account / Rapid In-Out Same-Day",
+      "legacyAlias": "SCN_201_MULE",
+      "mlTypology": "Placement / Layering / Integration",
+      "severity": "High",
+      "enabled": true,
+      "businessContext": "账户在极短时间内大量资金进出自灭，多个互不相关的对手方以相似金额进出，账户无实际经营活动痕迹，属典型跑分账户特征。",
+      "detectionMetrics": [
+        { "metricKey": "same_day_pass_ratio", "label": "当日进出比", "operator": ">=", "threshold": 0.7, "unit": "ratio", "compute": "当日进出对数 / 总交易数", "contribution": "high" },
+        { "metricKey": "distinct_unrelated_counterparties", "label": "互不相关对手方数", "operator": ">=", "threshold": 5, "unit": "count", "compute": "无关联关系的对手方计数", "contribution": "high" },
+        { "metricKey": "round_amount_ratio", "label": "整数金额比", "operator": ">=", "threshold": 0.6, "unit": "ratio", "compute": "整万/整千金额占比", "contribution": "medium" },
+        { "metricKey": "near_identical_amount_ratio", "label": "近等额对比", "operator": ">=", "threshold": 0.5, "unit": "ratio", "compute": "金额差在 5% 以内的配对比率", "contribution": "high" },
+        { "metricKey": "monthly_balance_avg", "label": "日均余额", "operator": "<=", "threshold": 500, "unit": "MYR", "compute": "日均账户余额", "contribution": "medium" },
+        { "metricKey": "declared_turnover_mismatch", "label": "申报周转不匹配度", "operator": ">=", "threshold": 10, "unit": "x times", "compute": "实际流量 / 申报周转额", "contribution": "high" },
+        { "metricKey": "ubo_depth", "label": "UBO 展开层数", "operator": "<=", "threshold": 2, "unit": "layers", "compute": "CTOS 层级展开深度", "contribution": "low" }
+      ],
+      "escalationGate": { "minHits": 3, "note": "达到阈值即倾向升级；无豁免条件可自动关闭，必须人工裁定。" },
+      "redFlags": [
+        { "code": "RF-201-01", "description": "大量互不相关对手方以近等额资金快速进出账户" },
+        { "code": "RF-201-02", "description": "账户日均余额极低，不具备承载该流量的经营特征" },
+        { "code": "RF-201-03", "description": "实际资金流量远超客户申报的经营周转规模" },
+        { "code": "RF-201-04", "description": "无发票、无商业合同等交易背景凭证" },
+        { "code": "RF-201-05", "description": "UBO 层级浅且无法解释资金实际归属" }
+      ],
+      "closeConditions": [
+        { "code": "CC-201-01", "prerequisite": "CC-003", "description": "存在完整商业背景：合同、发票、货运单据齐备且与资金流匹配", "prerequisiteDetail": "须由业务单位书面确认" },
+        { "code": "CC-201-02", "prerequisite": "CC-002", "description": "全部对手方经核实为真实贸易方且无关联性异常", "prerequisiteDetail": "须完成对手方背景核查" },
+        { "code": "CC-201-03", "prerequisite": "CC-005", "description": "已核实存在误解的第三方付款（如误付货款）", "prerequisiteDetail": "须有书面澄清与退回记录" }
+      ],
+      "modusOperandi": "跑分账户为上游非法资金提供归集通道，资金到账后在短时间内等额分散转出至多个收款账户，账户自身不留存余额、不产生实际经营痕迹。",
+      "analysisGuidance": {
+        "whenToEscalate": [
+          "三项及以上度量命中",
+          "无法取得任何交易背景凭证",
+          "对手方网络明显不相关且无法核实",
+          "存在涉及该账户或对手方的负面新闻"
+        ],
+        "whenToClose": [
+          "商业背景凭证齐备且与资金流匹配（CC-003）",
+          "对手方全部核实为真实贸易方（CC-002）",
+          "已核实为误解的第三方付款（CC-005）"
+        ],
+        "keyDecisionFactors": ["当日进出比", "对手方关联性", "申报周转匹配度", "商业背景凭证完整性"]
+      },
+      "rfiTriggers": [
+        { "trigger": "无法提供资金来源与交易目的说明", "targetParty": "customer" },
+        { "trigger": "对手方背景无法核实", "targetParty": "relationship_manager" },
+        { "trigger": "UBO 结构不透明且含受托人关键词", "targetParty": "internal_ops" }
+      ]
+    }
+  ],
+  "placeholderScenarioCodes": ["SCN102", "SCN105", "SCN106", "SCN108", "SCN109", "SCN111", "SCN113", "SCN114"]
+}

@@ -1,0 +1,251 @@
+{
+  "caseId": "TM-2026-0616-004",
+  "jurisdiction": "MY",
+  "integrity": {
+    "schemaVersion": "1.0.0",
+    "sourceSnapshot": "EDL-SNAP-20260616-OK",
+    "generatedAt": "2026-09-01T00:00:00"
+  },
+  "alert": {
+    "alertId": "AL-2026-0616-7815",
+    "scenarioCode": "SCN201",
+    "detectedAt": "2026-09-11T00:00:00",
+    "businessDate": "2026-09-11",
+    "reasonCodes": [
+      "SCN201_MULE"
+    ],
+    "riskScore": 66
+  },
+  "customer": {
+    "customerRef": "CUST-004",
+    "type": "Individual",
+    "name": "Tan Mei Ling",
+    "riskRating": "Medium",
+    "kycStatus": "Current",
+    "kycLastMaintenance": "2026-06-13",
+    "occupation": "Online reseller",
+    "declaredAnnualTurnover": 2600000,
+    "declaredSourceOfWealth": "Partially documented",
+    "declaredBusinessNature": "Online marketplace reselling",
+    "relationshipManager": "Aisha Rahman",
+    "pepStatus": "None",
+    "nationality": "MY"
+  },
+  "accounts": [
+    {
+      "accountRef": "ACC-4",
+      "type": "Current",
+      "currency": "MYR",
+      "openedAt": "2025-04-19",
+      "cardLimit": null,
+      "status": "Active",
+      "monthlyCreditTurnover": 1200000,
+      "monthlyDebitTurnover": 1180000
+    }
+  ],
+  "transactions": [
+    {
+      "txnRef": "TXN-E-000",
+      "accountRef": "ACC-4",
+      "postedAt": "2026-09-03T09:00:00",
+      "valueDate": "2026-09-03",
+      "direction": "Credit",
+      "amount": 200000,
+      "currency": "MYR",
+      "channel": "Transfer",
+      "country": "MY",
+      "counterpartyRef": "CP-S00",
+      "counterpartyName": "Seller 1",
+      "counterpartyRisk": null,
+      "description": "Marketplace settlement receipt"
+    },
+    {
+      "txnRef": "TXN-E-001",
+      "accountRef": "ACC-4",
+      "postedAt": "2026-09-03T10:00:00",
+      "valueDate": "2026-09-03",
+      "direction": "Credit",
+      "amount": 205000,
+      "currency": "MYR",
+      "channel": "Transfer",
+      "country": "MY",
+      "counterpartyRef": "CP-S01",
+      "counterpartyName": "Seller 2",
+      "counterpartyRisk": null,
+      "description": "Marketplace settlement receipt"
+    },
+    {
+      "txnRef": "TXN-E-002",
+      "accountRef": "ACC-4",
+      "postedAt": "2026-09-03T11:00:00",
+      "valueDate": "2026-09-03",
+      "direction": "Credit",
+      "amount": 210000,
+      "currency": "MYR",
+      "channel": "Transfer",
+      "country": "MY",
+      "counterpartyRef": "CP-S02",
+      "counterpartyName": "Seller 3",
+      "counterpartyRisk": null,
+      "description": "Marketplace settlement receipt"
+    },
+    {
+      "txnRef": "TXN-E-003",
+      "accountRef": "ACC-4",
+      "postedAt": "2026-09-03T12:00:00",
+      "valueDate": "2026-09-03",
+      "direction": "Credit",
+      "amount": 215000,
+      "currency": "MYR",
+      "channel": "Transfer",
+      "country": "MY",
+      "counterpartyRef": "CP-S03",
+      "counterpartyName": "Seller 4",
+      "counterpartyRisk": null,
+      "description": "Marketplace settlement receipt"
+    },
+    {
+      "txnRef": "TXN-E-004",
+      "accountRef": "ACC-4",
+      "postedAt": "2026-09-03T13:00:00",
+      "valueDate": "2026-09-03",
+      "direction": "Credit",
+      "amount": 220000,
+      "currency": "MYR",
+      "channel": "Transfer",
+      "country": "MY",
+      "counterpartyRef": "CP-S04",
+      "counterpartyName": "Seller 5",
+      "counterpartyRisk": null,
+      "description": "Marketplace settlement receipt"
+    },
+    {
+      "txnRef": "TXN-E-005",
+      "accountRef": "ACC-4",
+      "postedAt": "2026-09-03T14:00:00",
+      "valueDate": "2026-09-03",
+      "direction": "Credit",
+      "amount": 225000,
+      "currency": "MYR",
+      "channel": "Transfer",
+      "country": "MY",
+      "counterpartyRef": "CP-S05",
+      "counterpartyName": "Seller 6",
+      "counterpartyRisk": null,
+      "description": "Marketplace settlement receipt"
+    },
+    {
+      "txnRef": "TXN-F-000",
+      "accountRef": "ACC-4",
+      "postedAt": "2026-09-03T13:00:00",
+      "valueDate": "2026-09-03",
+      "direction": "Debit",
+      "amount": 195000,
+      "currency": "MYR",
+      "channel": "Online",
+      "country": "MY",
+      "counterpartyRef": "CP-77",
+      "counterpartyName": "Vendor Consolidated Payable",
+      "counterpartyRisk": null,
+      "description": "Vendor payment"
+    },
+    {
+      "txnRef": "TXN-F-001",
+      "accountRef": "ACC-4",
+      "postedAt": "2026-09-03T14:00:00",
+      "valueDate": "2026-09-03",
+      "direction": "Debit",
+      "amount": 200000,
+      "currency": "MYR",
+      "channel": "Online",
+      "country": "MY",
+      "counterpartyRef": "CP-77",
+      "counterpartyName": "Vendor Consolidated Payable",
+      "counterpartyRisk": null,
+      "description": "Vendor payment"
+    },
+    {
+      "txnRef": "TXN-F-002",
+      "accountRef": "ACC-4",
+      "postedAt": "2026-09-03T15:00:00",
+      "valueDate": "2026-09-03",
+      "direction": "Debit",
+      "amount": 205000,
+      "currency": "MYR",
+      "channel": "Online",
+      "country": "MY",
+      "counterpartyRef": "CP-77",
+      "counterpartyName": "Vendor Consolidated Payable",
+      "counterpartyRisk": null,
+      "description": "Vendor payment"
+    },
+    {
+      "txnRef": "TXN-F-003",
+      "accountRef": "ACC-4",
+      "postedAt": "2026-09-03T16:00:00",
+      "valueDate": "2026-09-03",
+      "direction": "Debit",
+      "amount": 210000,
+      "currency": "MYR",
+      "channel": "Online",
+      "country": "MY",
+      "counterpartyRef": "CP-77",
+      "counterpartyName": "Vendor Consolidated Payable",
+      "counterpartyRisk": null,
+      "description": "Vendor payment"
+    },
+    {
+      "txnRef": "TXN-F-004",
+      "accountRef": "ACC-4",
+      "postedAt": "2026-09-03T17:00:00",
+      "valueDate": "2026-09-03",
+      "direction": "Debit",
+      "amount": 215000,
+      "currency": "MYR",
+      "channel": "Online",
+      "country": "MY",
+      "counterpartyRef": "CP-77",
+      "counterpartyName": "Vendor Consolidated Payable",
+      "counterpartyRisk": null,
+      "description": "Vendor payment"
+    },
+    {
+      "txnRef": "TXN-F-005",
+      "accountRef": "ACC-4",
+      "postedAt": "2026-09-03T18:00:00",
+      "valueDate": "2026-09-03",
+      "direction": "Debit",
+      "amount": 220000,
+      "currency": "MYR",
+      "channel": "Online",
+      "country": "MY",
+      "counterpartyRef": "CP-77",
+      "counterpartyName": "Vendor Consolidated Payable",
+      "counterpartyRisk": null,
+      "description": "Vendor payment"
+    }
+  ],
+  "ubo": null,
+  "screening": {
+    "watchlistHits": [],
+    "pepHits": []
+  },
+  "searchEvidence": [
+    {
+      "searchId": "SRCH-4",
+      "query": "Tan Mei Ling online reseller adverse news",
+      "searchedAt": "2026-09-11T02:00:00",
+      "results": [
+        {
+          "title": "Marketplace seller registry check",
+          "url": "https://registry.example.com/seller/tanmei",
+          "snippet": "Registered seller since 2024, no enforcement actions found.",
+          "publishedAt": "2026-06-23",
+          "screenshotRef": "SHOT-SRCH-4-0",
+          "relevance": "Favourable"
+        }
+      ]
+    }
+  ],
+  "priorAlerts": []
+}

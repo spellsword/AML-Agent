@@ -1,0 +1,156 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "nova.poc.llm_inference",
+  "title": "LLM 推理契约 — 对齐 TSD §7.11.2 / §7.11.3",
+  "description": "应用只调用系统内部推理适配器，绝不直连供应商端点（TSD §7.11.1 系统边界）。请求与响应字段名冻结；扩展只能加可选字段且必须版本化 templateVersion。",
+
+  "request": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": ["requestId", "taskType", "templateId", "templateVersion", "maskedContext", "generation"],
+    "properties": {
+      "requestId": {
+        "type": "string",
+        "description": "全局唯一推理标识 + 幂等键。空值被拒。重试必须复用同一 requestId。"
+      },
+      "taskType": {
+        "type": "string",
+        "enum": ["ANALYSIS", "NARRATIVE"],
+        "description": "ANALYSIS 用于裁决阶段；NARRATIVE 用于叙事装配。"
+      },
+      "templateId": { "type": "string", "description": "已批准提示模板标识，未知或已禁用则拒绝。" },
+      "templateVersion": { "type": "string", "description": "与 templateId 配对的不可变已批准版本。" },
+      "maskedContext": {
+        "type": "object",
+        "required": ["subject", "evidenceReferences"],
+        "properties": {
+          "subject": { "type": "string", "description": "稳定类别型代理令牌，如 [CUSTOMER_1]。" },
+          "evidenceReferences": {
+            "type": "array",
+            "items": { "type": "string" },
+            "minItems": 1,
+            "description": "证据引用集合，响应中的每个引用必须能解析到此集合内。"
+          },
+          "scenarioKnowledge": {
+            "type": ["object", "null"],
+            "description": "场景知识条目注入。两层架构的知识层（TSD §2.2.3.1）。"
+          },
+          "transactions": { "type": "array", "items": { "type": "object" } },
+          "screening": { "type": ["object", "null"] },
+          "searchEvidence": { "type": ["array", "null"] },
+          "priorVoices": {
+            "type": ["object", "null"],
+            "description": "裁决阶段上游声部输出。Jury 成员之间不得互相可见。"
+          }
+        }
+      },
+      "generation": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["maxOutputTokens", "temperature"],
+        "properties": {
+          "maxOutputTokens": { "type": "integer", "minimum": 1, "description": "受已批准模板配置上界约束，越界被拒。" },
+          "temperature": { "type": "number", "minimum": 0.0, "maximum": 1.0 }
+        }
+      }
+    }
+  },
+
+  "responseSuccess": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": ["requestId", "status", "output", "modelId", "modelVersion", "usage", "latencyMs"],
+    "properties": {
+      "requestId": { "type": "string" },
+      "status": { "type": "string", "const": "SUCCESS" },
+      "output": {
+        "type": "object",
+        "required": ["evidenceReferences"],
+        "properties": {
+          "narrative": { "type": "string", "description": "NARRATIVE 成功时必填。" },
+          "recommendation": { "type": "string", "description": "ANALYSIS 成功时必填；始终是建议而非自主裁定。" },
+          "evidenceReferences": {
+            "type": "array",
+            "items": { "type": "string" },
+            "minItems": 1,
+            "description": "每个引用必须解析到请求证据集合，否则判 LLM-OUTPUT-INVALID。"
+          }
+        }
+      },
+      "modelId": { "type": "string" },
+      "modelVersion": { "type": "string" },
+      "usage": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["inputTokens", "outputTokens"],
+        "properties": {
+          "inputTokens": { "type": "integer", "minimum": 0 },
+          "outputTokens": { "type": "integer", "minimum": 0 }
+        }
+      },
+      "latencyMs": { "type": "integer", "minimum": 0 }
+    }
+  },
+
+  "responseFailure": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": ["requestId", "status", "error"],
+    "properties": {
+      "requestId": { "type": "string" },
+      "status": { "type": "string", "const": "FAILED" },
+      "error": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["code", "message"],
+        "properties": {
+          "code": {
+            "type": "string",
+            "enum": [
+              "LLM-CONTRACT-INVALID",
+              "LLM-AUTH-FAILURE",
+              "LLM-CAPACITY-LIMIT",
+              "LLM-TIMEOUT",
+              "LLM-SERVICE-UNAVAILABLE",
+              "LLM-OUTPUT-INVALID"
+            ]
+          },
+          "message": { "type": "string", "description": "已脱敏诊断信息。" }
+        }
+      }
+    }
+  },
+
+  "retryPolicy": {
+    "connectTimeoutSeconds": 5,
+    "inferenceReadTimeoutSeconds": 240,
+    "cumulativeInferenceBudgetSeconds": 240,
+    "maxAutomaticAttempts": 2,
+    "retryableCodes": ["LLM-CAPACITY-LIMIT", "LLM-TIMEOUT", "LLM-SERVICE-UNAVAILABLE"],
+    "nonRetryableCodes": ["LLM-CONTRACT-INVALID", "LLM-AUTH-FAILURE", "LLM-OUTPUT-INVALID"],
+    "notes": [
+      "仅上述三个错误码可自动重试，其他直接走降级路径。",
+      "重试必须复用同一 requestId。",
+      "累计推理预算 240 秒/案件耗尽即触发 AI 降级，保证 AI 环节不超过 §13.3 五分钟端到端目标的较大份额。",
+      "LLM-OUTPUT-INVALID 不可重试，直接路由 AI fallback。",
+      "LLM-AUTH-FAILURE 不可自动重试，须禁用受影响凭据并触发安全/运维告警。"
+    ]
+  },
+
+  "preCallGates": [
+    { "gate": "masking_applied", "onFail": "block_call_and_fallback", "ctl": "CTL-07" },
+    { "gate": "template_known_and_enabled", "onFail": "reject_before_inference_no_retry", "ctl": "CTL-20" },
+    { "gate": "generation_bounds_within_template_config", "onFail": "reject_before_inference_no_retry", "ctl": "CTL-20" },
+    { "gate": "prompt_injection_scan", "onFail": "reject_before_inference", "ctl": "CTL-19" },
+    { "gate": "jurisdiction_resolvable", "onFail": "fail_closed_no_rows", "ctl": "TSD §2.2.6" }
+  ],
+
+  "postCallGates": [
+    { "gate": "schema_valid", "onFail": "LLM-OUTPUT-INVALID", "ctl": "CTL-20" },
+    { "gate": "evidence_refs_resolvable", "onFail": "LLM-OUTPUT-INVALID", "ctl": "CTL-20" },
+    { "gate": "no_unmasked_pii_in_output", "onFail": "LLM-OUTPUT-INVALID", "ctl": "CTL-07 / CTL-28" },
+    { "gate": "narrative_full_terms_no_abbreviation", "onFail": "LLM-OUTPUT-INVALID", "ctl": "CTL-20" },
+    { "gate": "no_premature_escalate_state", "onFail": "LLM-OUTPUT-INVALID", "ctl": "CTL-20" },
+    { "gate": "idempotency_not_violated", "onFail": "LLM-OUTPUT-INVALID", "ctl": "CTL-20" }
+  ]
+}
